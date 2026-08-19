@@ -118,4 +118,30 @@ describe('OptConfigDataManager', () => {
     const result = optConfigs['validate'](invalid, id)
     expect(result?.excludedLocations).not.toContain(id)
   })
+
+  it('should default forcedArtifactSet to undefined', () => {
+    const id = optConfigs.new()
+    const cfg = optConfigs.get(id)
+    expect(cfg?.forcedArtifactSet).toBeUndefined()
+  })
+
+  it('should keep a valid forcedArtifactSet', () => {
+    const id = optConfigs.new()
+    const valid = {
+      ...optConfigs.get(id),
+      forcedArtifactSet: 'Adventurer',
+    }
+    const result = optConfigs['validate'](valid, id)
+    expect(result?.forcedArtifactSet).toBe('Adventurer')
+  })
+
+  it('should discard an invalid forcedArtifactSet', () => {
+    const id = optConfigs.new()
+    const invalid = {
+      ...optConfigs.get(id),
+      forcedArtifactSet: 'NOT_A_REAL_SET',
+    }
+    const result = optConfigs['validate'](invalid, id)
+    expect(result?.forcedArtifactSet).toBeUndefined()
+  })
 })

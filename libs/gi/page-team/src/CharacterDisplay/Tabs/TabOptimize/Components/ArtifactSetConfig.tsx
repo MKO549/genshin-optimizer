@@ -39,6 +39,7 @@ import { getArtSetStat } from '@genshin-optimizer/gi/stats'
 import { SlotIcon } from '@genshin-optimizer/gi/svgicons'
 import type { dataContextObj } from '@genshin-optimizer/gi/ui'
 import {
+  ArtifactSetAutocomplete,
   ArtifactSetName,
   DataContext,
   SetEffectDisplay,
@@ -80,7 +81,7 @@ export default function ArtifactSetConfig({
     teamChar: { key: charKey, conditional, optConfigId },
     teamCharId,
   } = useContext(TeamCharacterContext)
-  const { artSetExclusion } = useOptConfig(optConfigId)!
+  const { artSetExclusion, forcedArtifactSet } = useOptConfig(optConfigId)!
   const [open, setOpen] = useState(false)
   const onOpen = useCallback(() => setOpen(true), [setOpen])
   const onClose = useCallback(() => setOpen(false), [setOpen])
@@ -177,6 +178,13 @@ export default function ArtifactSetConfig({
     },
     [artKeysByRarity, artSetExclusion, database, optConfigId]
   )
+  const setForcedArtifactSet = useCallback(
+    (key: ArtifactSetKey | '') =>
+      database.optConfigs.set(optConfigId, {
+        forcedArtifactSet: key || undefined,
+      }),
+    [database, optConfigId]
+  )
 
   return (
     <>
@@ -252,6 +260,23 @@ export default function ArtifactSetConfig({
           </CardContent>
           <Divider />
           <CardContent>
+            <CardThemed bgt="light" sx={{ mb: 1 }}>
+              <CardContent>
+                <Typography>
+                  <strong>{t('artSetConfig.modal.forcedSet.title')}</strong>
+                </Typography>
+                <Typography>{t('artSetConfig.modal.forcedSet.text')}</Typography>
+                <ArtifactSetAutocomplete
+                  artSetKey={forcedArtifactSet ?? ''}
+                  setArtSetKey={setForcedArtifactSet}
+                  label={t('artSetConfig.modal.forcedSet.label')}
+                  getOptionDisabled={({ key }) => {
+                    const slotCount = artSlotCount[key as ArtifactSetKey]
+                    return !slotCount || getNumSlots(slotCount) < 5
+                  }}
+                />
+              </CardContent>
+            </CardThemed>
             <CardThemed bgt="light" sx={{ mb: 1 }}>
               <CardContent>
                 <Box display="flex" gap={1}>
