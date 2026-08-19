@@ -198,10 +198,12 @@ export default function TabBuild() {
       levelHigh,
       useExcludedArts,
       useTeammateBuild,
+      forcedArtifactSet,
     } = deferredBuildSetting
 
     return allArts.filter((art) => {
       if (!useExcludedArts && artExclusion.includes(art.id)) return false
+      if (forcedArtifactSet && art.setKey !== forcedArtifactSet) return false
       if (!useTeammateBuild && teammateArtifactIds.includes(art.id))
         return false
       if (art.level < levelLow) return false

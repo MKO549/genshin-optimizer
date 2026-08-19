@@ -1,6 +1,7 @@
 import {
   zodBoolean,
   zodClampedNumber,
+  zodEnum,
   zodFilteredArray,
   zodNumericLiteralWithDefault,
 } from '@genshin-optimizer/common/database'
@@ -96,6 +97,7 @@ const mainStatKeysSchema = z
 
 const optConfigSchema = z.object({
   artSetExclusion: artSetExclusionSchema.catch({}),
+  forcedArtifactSet: zodEnum(allArtifactSetKeys).optional().catch(undefined),
   statFilters: statFiltersSchema,
   mainStatKeys: mainStatKeysSchema,
   excludedLocations: zodFilteredArray(allLocationCharacterKeys, []),

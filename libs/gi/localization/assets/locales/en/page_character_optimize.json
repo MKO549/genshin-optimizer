@@ -119,6 +119,11 @@
     "excludeAll4set": "Exclude All 4-Set",
     "alExRainbow": "<0>Allow <1></1></0> / <2>Exclude <1></1></2> Rainbow Builds",
     "modal": {
+      "forcedSet": {
+        "title": "Force Single Set (Mono 5-Piece)",
+        "text": "Restrict the search to only use artifacts from a single chosen set across all 5 slots. Useful to find the best possible mono-set build first, then manually decide which slot to swap for an off-set piece.",
+        "label": "Forced Artifact Set"
+      },
       "setCond": {
         "title": "Artifact Set Conditional Effects",
         "reset": "Reset Conditionals",
