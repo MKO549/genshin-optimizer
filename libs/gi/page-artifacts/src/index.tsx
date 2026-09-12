@@ -27,12 +27,14 @@ import {
   artifactSortMap,
 } from '@genshin-optimizer/gi/util'
 import AddIcon from '@mui/icons-material/Add'
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices'
 import DifferenceIcon from '@mui/icons-material/Difference'
 import { Box, Button, CardContent, Grid, Skeleton } from '@mui/material'
 import { Suspense, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import ReactGA from 'react-ga4'
 import { useTranslation } from 'react-i18next'
 import ArtifactFilter, { ArtifactRedButtons } from './ArtifactFilter'
+import ArtifactSetCleanupModal from './ArtifactSetCleanupModal'
 import DupModal from './DupModal'
 import ArtifactInfoDisplay from './InfoDisplay'
 
@@ -47,6 +49,7 @@ export default function PageArtifact() {
   const [artifactIdToEdit, setArtifactIdToEdit] = useState<string | undefined>()
 
   const [showDup, onShowDup, onHideDup] = useBoolState(false)
+  const [showCleanup, onShowCleanup, onHideCleanup] = useBoolState(false)
 
   const brPt = useMediaQueryUp()
 
@@ -133,6 +136,9 @@ export default function PageArtifact() {
           setArtifactIdToEdit={setArtifactIdToEdit}
         />
       </Suspense>
+      <Suspense fallback={false}>
+        <ArtifactSetCleanupModal show={showCleanup} onHide={onHideCleanup} />
+      </Suspense>
       <InfoComponent
         pageKey="artifactPage"
         modalTitle={t('info.title')}
@@ -184,6 +190,16 @@ export default function PageArtifact() {
             startIcon={<DifferenceIcon />}
           >
             {t('showDup')}
+          </Button>
+        </Grid>
+        <Grid item xs={1}>
+          <Button
+            fullWidth
+            onClick={onShowCleanup}
+            color="info"
+            startIcon={<CleaningServicesIcon />}
+          >
+            {t('setCleanup.button')}
           </Button>
         </Grid>
       </Grid>

@@ -4,6 +4,7 @@ import { compressToB64Gzip } from '@genshin-optimizer/common/util'
 import type { GenderKey } from '@genshin-optimizer/gi/consts'
 import type { IGOOD } from '@genshin-optimizer/gi/good'
 import { DBMetaEntry } from './DataEntries/DBMetaEntry'
+import { ArtifactCleanupConfigEntry } from './DataEntries/ArtifactCleanupConfigEntry'
 import { DisplayArchiveEntry } from './DataEntries/DisplayArchiveEntry'
 import { DisplayArtifactEntry } from './DataEntries/DisplayArtifactEntry'
 import { DisplayCharacterEntry } from './DataEntries/DisplayCharacterEntry'
@@ -42,6 +43,7 @@ export class ArtCharDatabase extends Database {
   displayArchive: DisplayArchiveEntry
   displayTool: DisplayToolEntry
   displayTeam: DisplayTeamEntry
+  artifactCleanup: ArtifactCleanupConfigEntry
   dbIndex: 1 | 2 | 3 | 4
   dbVer: number
 
@@ -89,6 +91,7 @@ export class ArtCharDatabase extends Database {
     this.displayTool = new DisplayToolEntry(this)
     this.displayTeam = new DisplayTeamEntry(this)
     this.displayArchive = new DisplayArchiveEntry(this)
+    this.artifactCleanup = new ArtifactCleanupConfigEntry(this)
 
     // invalidates character when things change.
     const updateLastEdit = () => this.dbMeta.set({ lastEdit: Date.now() })
@@ -110,6 +113,7 @@ export class ArtCharDatabase extends Database {
     this.displayTool.follow(updateLastEdit)
     this.displayTeam.follow(updateLastEdit)
     this.displayArchive.follow(updateLastEdit)
+    this.artifactCleanup.follow(updateLastEdit)
   }
   get dataManagers() {
     // IMPORTANT: it must be chars, weapon, arts in order, to respect import order
@@ -135,6 +139,7 @@ export class ArtCharDatabase extends Database {
       this.displayTool,
       this.displayTeam,
       this.displayArchive,
+      this.artifactCleanup,
     ] as const
   }
 

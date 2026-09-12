@@ -1,4 +1,5 @@
 import {
+  type ArtifactSetKey,
   type ArtifactSlotKey,
   allArtifactSetKeys,
 } from '@genshin-optimizer/gi/consts'
@@ -31,7 +32,7 @@ export function removeSetKeys(
       if (cond.operation !== 'read' || cmp.operation !== 'const') return f
 
       const setKey = cond.path[1]
-      if (!allArtifactSetKeys.includes(setKey as any)) return f
+      if (!allArtifactSetKeys.includes(setKey as ArtifactSetKey)) return f
 
       const skCount = setKeysInBuild[setKey] ?? 0
       if (skCount + 1 < cmp.value) return fail

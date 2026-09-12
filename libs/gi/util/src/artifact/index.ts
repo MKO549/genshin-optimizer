@@ -1,5 +1,6 @@
 export * from './artifact'
 export * from './artifactMeta'
 export * from './artifactSortUtil'
+export * from './offPieceRule'
 export * from './randomizeArtifact'
 export * from './rollProbabilityUtil'
