@@ -59,8 +59,14 @@ export class ArtifactDataManager extends DataManager<
 > {
   constructor(database: ArtCharDatabase) {
     super(database, 'artifacts')
+    // The cleanup data entry shares the historical artifact_ prefix.
+    // It must survive inventory loading so profiles and coverage persist.
     for (const key of this.database.storage.keys)
-      if (key.startsWith('artifact_') && !this.set(key, {}))
+      if (
+        key !== 'artifact_cleanup_config' &&
+        key.startsWith('artifact_') &&
+        !this.set(key, {})
+      )
         this.database.storage.remove(key)
   }
   override validate(obj: unknown): IArtifact | undefined {

@@ -1,24 +1,23 @@
 import type {
   ArtifactSetKey,
-  ArtifactSlotKey,
-  CharacterKey,
   MainStatKey,
   SubstatKey,
 } from '@genshin-optimizer/gi/consts'
 import {
   allArtifactSetKeys,
-  allCharacterKeys,
   allMainStatKeys,
   allSubstatKeys,
 } from '@genshin-optimizer/gi/consts'
 import type {
   ArtifactCleanupConfig,
   CleanupBuildProfile,
+  CleanupCharacterKey,
   CleanupProfileState,
   CleanupRole,
   CleanupSetTargets,
   CleanupStyle,
 } from '@genshin-optimizer/gi/db'
+import { allCleanupCharacterKeys } from '@genshin-optimizer/gi/db'
 
 type JsonRecord = Record<string, unknown> & {
   artifactSet?: unknown
@@ -75,7 +74,7 @@ export type GGArtifactImportPreview = {
   warnings: string[]
 }
 
-const characterAliases: Record<string, CharacterKey> = {
+const characterAliases: Record<string, CleanupCharacterKey> = {
   kazuha: 'KaedeharaKazuha',
   kokomi: 'SangonomiyaKokomi',
   raiden: 'RaidenShogun',
@@ -220,41 +219,64 @@ const halfSetIdFamilies: Record<number, string> = {
   24: 'plunge-dmg-25',
 }
 
-/** Current 5-star GO sets matching each GGArtifact two-piece family. */
+/** GGArtifact family membership, including every set supported by GO. */
 const halfSetFamilySets: Record<string, ArtifactSetKey[]> = {
-  'cryo-dmg-15': ['BlizzardStrayer'],
+  'atk%-18': [
+    'BraveHeart',
+    'EchoesOfAnOffering',
+    'ResolutionOfSojourner',
+    'GladiatorsFinale',
+    'VermillionHereafter',
+    'ShimenawasReminiscence',
+    'NighttimeWhispersInTheEchoingWoods',
+    'FragmentOfHarmonicWhimsy',
+    'UnfinishedReverie',
+    'ADayCarvedFromRisingWinds',
+    'DisenchantmentInDeepShadow',
+    'ScarletProof',
+    'HeartOfTheFurnace',
+  ],
+  'em-80': [
+    'Instructor',
+    'WanderersTroupe',
+    'GildedDreams',
+    'FlowerOfParadiseLost',
+    'NightOfTheSkysUnveiling',
+    'AubadeOfMorningstarAndMoon',
+  ],
+  'er-20': [
+    'Scholar',
+    'TheExile',
+    'EmblemOfSeveredFate',
+    'SilkenMoonsSerenade',
+    'CelestialGift',
+  ],
+  'heal-15': ['OceanHuedClam', 'MaidenBeloved', 'SongOfDaysPast'],
+  'anemo-dmg-15': ['ViridescentVenerer', 'DesertPavilionChronicle'],
+  'cryo-dmg-15': ['BlizzardStrayer', 'FinaleOfTheDeepGalleries'],
+  'def%-30': ['HuskOfOpulentDreams', 'DefendersWill'],
   'hp%-20': ['TenacityOfTheMillelith', 'VourukashasGlow'],
-  'def%-30': ['HuskOfOpulentDreams'],
+  'hydro-dmg-15': ['HeartOfDepth', 'NymphsDream'],
+  'na-ca-dmg-15': ['MartialArtist', 'MarechausseeHunter'],
+  'physical-dmg-25': ['BloodstainedChivalry', 'PaleFlame'],
+  'skill-dmg-20': ['Gambler', 'GoldenTroupe'],
+  'burst-dmg-20': ['NoblesseOblige'],
+  'cr-12': ['Berserker'],
+  'dendro-dmg-15': ['DeepwoodMemories'],
   'electro-dmg-15': ['ThunderingFury'],
   'electro-res-40': ['Thundersoother'],
   'geo-dmg-15': ['ArchaicPetra'],
-  'em-80': ['WanderersTroupe', 'GildedDreams', 'FlowerOfParadiseLost'],
-  'burst-dmg-20': ['EmblemOfSeveredFate'],
-  'atk%-18': [
-    'GladiatorsFinale',
-    'ShimenawasReminiscence',
-    'VermillionHereafter',
-    'EchoesOfAnOffering',
-  ],
-  'physical-dmg-25': ['BloodstainedChivalry', 'PaleFlame'],
-  'hydro-dmg-15': ['HeartOfDepth'],
-  'heal-15': ['MaidenBeloved', 'OceanHuedClam', 'SongOfDaysPast'],
-  'pyro-res-40': ['Lavawalker'],
-  'pyro-dmg-15': ['CrimsonWitchOfFlames'],
-  'er-20': ['EmblemOfSeveredFate'],
-  'anemo-dmg-15': ['ViridescentVenerer'],
-  'shield-35': ['RetracingBolide'],
-  'dendro-dmg-15': ['DeepwoodMemories'],
-  'na-ca-dmg-15': ['MarechausseeHunter'],
-  'skill-dmg-20': ['GoldenTroupe'],
-  'nightsoul-energy-6': ['ScrollOfTheHeroOfCinderCity'],
   'nightsoul-dmg-15': ['ObsidianCodex'],
+  'nightsoul-energy-6': ['ScrollOfTheHeroOfCinderCity'],
   'plunge-dmg-25': ['LongNightsOath'],
+  'pyro-dmg-15': ['CrimsonWitchOfFlames'],
+  'pyro-res-40': ['Lavawalker'],
+  'shield-35': ['RetracingBolide'],
 }
 
 const normal = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
 const characterById = new Map(
-  allCharacterKeys.map((key) => [normal(key), key] as const)
+  allCleanupCharacterKeys.map((key) => [normal(key), key] as const)
 )
 const setById = new Map(
   allArtifactSetKeys.map((key) => [normal(key), key] as const)
@@ -281,7 +303,7 @@ function number(value: unknown, fallback = 0): number {
 function array(value: unknown): unknown[] {
   return Array.isArray(value) ? value : value === undefined ? [] : [value]
 }
-function knownCharacter(value: unknown): CharacterKey | undefined {
+function knownCharacter(value: unknown): CleanupCharacterKey | undefined {
   const key = string(value)
   return key
     ? (characterAliases[normal(key)] ?? characterById.get(normal(key)))
@@ -323,6 +345,12 @@ function weights(
         return stat === undefined ? [] : [[String(stat), weight] as const]
       })
   values.forEach(([stat, weight]) => {
+    if (
+      !Number.isFinite(Number(weight)) ||
+      Number(weight) < 0 ||
+      Number(weight) > 100
+    )
+      warnings.push(`${context}: invalid weight for ${stat}`)
     const rawStat = normal(stat)
     const key: MainStatKey | SubstatKey | undefined =
       substats && rawStat === 'def' ? 'def' : knownStat(stat)
@@ -372,6 +400,7 @@ function setTargets(
   const concrete: ArtifactSetKey[] = []
   const halfSets: ArtifactSetKey[] = []
   const families: string[] = []
+  const halfSetOptions: ArtifactSetKey[][] = []
   const composition = build.composition
   const compositionText = JSON.stringify(composition ?? '').toLowerCase()
   const useHalfSets =
@@ -381,25 +410,33 @@ function setTargets(
 
   if (useHalfSets) {
     ;[build.halfSet1, build.halfSet2].forEach((halfSet) => {
+      const choices: ArtifactSetKey[] = []
       array(halfSet).forEach((candidate) => {
         const key = knownSet(candidate)
-        if (key) halfSets.push(key)
+        if (key) choices.push(key)
         else {
           const name = string(candidate)
           const family = knownHalfSetFamily(candidate)
           if (family) {
             families.push(family)
-            halfSets.push(...(halfSetFamilySets[family] ?? []))
+            choices.push(...(halfSetFamilySets[family] ?? []))
           } else if (name)
             warnings.push(`${context}: unknown 2-piece set family “${name}”`)
         }
       })
+      halfSetOptions.push([...new Set(choices)])
+      halfSets.push(...choices)
     })
   }
 
   const source = record(composition)
   pushSet(
-    build.artifactSet ?? build.artifactSets ?? build.set ?? source?.artifactSet,
+    useHalfSets
+      ? undefined
+      : (build.artifactSet ??
+          build.artifactSets ??
+          build.set ??
+          source?.artifactSet),
     useHalfSets ? halfSets : concrete,
     warnings,
     context
@@ -408,6 +445,7 @@ function setTargets(
     fourPieceSets: [...new Set(concrete)],
     halfSets: [...new Set(halfSets)],
     halfSetFamilies: [...new Set(families)],
+    ...(useHalfSets ? { halfSetOptions } : {}),
   }
 }
 
@@ -577,8 +615,42 @@ export function previewGGArtifactImport(
         )
       ),
       source: string(build.source),
-      normalizer: string(build.normalizer),
+      normalizer:
+        build.normalizer === undefined ? undefined : number(build.normalizer),
     }
+    // Preserve the export's filter expansions before applying local overrides.
+    if (options['expandElementalGoblet'] === true) {
+      const elemental = allMainStatKeys.filter(
+        (key) => key.endsWith('_dmg_') && key !== 'physical_dmg_'
+      )
+      const weight = Math.max(
+        0,
+        ...elemental.map((key) => profile.mainStatWeights.goblet?.[key] ?? 0)
+      )
+      if (weight > 0)
+        for (const key of elemental)
+          profile.mainStatWeights.goblet![key] = weight
+    }
+    if (
+      options['expandCritCirclet'] === true &&
+      profile.setTargets.fourPieceSets.length
+    ) {
+      const weight = Math.max(
+        profile.mainStatWeights.circlet?.critRate_ ?? 0,
+        profile.mainStatWeights.circlet?.critDMG_ ?? 0
+      )
+      if (weight > 0)
+        Object.assign(profile.mainStatWeights.circlet!, {
+          critRate_: weight,
+          critDMG_: weight,
+        })
+    }
+    if (
+      build.composition !== undefined &&
+      build.composition !== '4pc' &&
+      build.composition !== '2pc+2pc'
+    )
+      warnings.push(`${context}: unsupported composition`)
     const old = existing.get(id)
     const state: CleanupProfileState = {
       ggBuildId: id,
@@ -614,7 +686,24 @@ export function previewGGArtifactImport(
     warnings,
     config: {
       ...current,
+      goProfileCoverage: Object.fromEntries(
+        Object.entries(current.goProfileCoverage).filter(([id]) => {
+          const old = existing.get(id)
+          const next = imported.find(({ base }) => base.id === id)
+          // A changed profile needs its coverage confirmed again.
+          return !old || Boolean(next && equivalent(old.base, next.base))
+        })
+      ),
       profiles: [...manualProfiles, ...imported, ...staleProfiles],
+      importWarnings: [
+        ...warnings,
+        ...(invalid
+          ? [
+              String(invalid) +
+                ' imported build(s) could not be read; coverage needs review.',
+            ]
+          : []),
+      ],
     },
   }
 }

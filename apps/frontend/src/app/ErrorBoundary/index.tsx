@@ -1,7 +1,6 @@
 import { ThemeProvider } from '@emotion/react'
 import { ReadOnlyTextArea } from '@genshin-optimizer/common/react-util'
 import { CardThemed } from '@genshin-optimizer/common/ui'
-import { isDev } from '@genshin-optimizer/common/util'
 import { theme } from '@genshin-optimizer/gi/theme'
 import { DatabaseCard } from '@genshin-optimizer/gi/ui'
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever'
@@ -39,7 +38,6 @@ class ErrorBoundary extends Component<Props, State> {
 
   public static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
-    if (isDev) return { error: undefined }
     return { error }
   }
 

@@ -3,14 +3,16 @@ import type { ICachedArtifact } from '@genshin-optimizer/gi/db'
 import { useDatabase, useDisplayArtifact } from '@genshin-optimizer/gi/db-ui'
 import type { FilterOption } from '@genshin-optimizer/gi/schema'
 import { ArtifactFilterDisplay } from '@genshin-optimizer/gi/ui'
+import CloudSyncIcon from '@mui/icons-material/CloudSync'
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever'
 import LockIcon from '@mui/icons-material/Lock'
 import LockOpenIcon from '@mui/icons-material/LockOpen'
 import PersonOffIcon from '@mui/icons-material/PersonOff'
 import ReplayIcon from '@mui/icons-material/Replay'
 import { Button, CardContent, Grid, Skeleton, Typography } from '@mui/material'
-import { Suspense, useCallback, useMemo } from 'react'
+import { Suspense, useCallback, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import GoodScannerManagerModal from './GoodScannerManagerModal'
 
 export default function ArtifactFilter({
   numShowing,
@@ -90,10 +92,12 @@ export default function ArtifactFilter({
 export function ArtifactRedButtons({ artifactIds }: { artifactIds: string[] }) {
   const { t } = useTranslation(['artifact', 'ui'])
   const database = useDatabase()
+  const [showGoodScannerManager, setShowGoodScannerManager] = useState(false)
+  const artifacts = useMemo(
+    () => artifactIds.map((id) => database.arts.get(id)) as ICachedArtifact[],
+    [artifactIds, database]
+  )
   const { numDelete, numUnequip, numUnlock, numLock } = useMemo(() => {
-    const artifacts = artifactIds.map((id) =>
-      database.arts.get(id)
-    ) as ICachedArtifact[]
     const numUnlock = artifacts.reduce((a, art) => a + (art.lock ? 0 : 1), 0)
     const numLock = artifacts.length - numUnlock
     const numDelete = numUnlock
@@ -102,7 +106,7 @@ export function ArtifactRedButtons({ artifactIds }: { artifactIds: string[] }) {
       0
     )
     return { numDelete, numUnequip, numUnlock, numLock }
-  }, [artifactIds, database])
+  }, [artifacts])
 
   const unequipArtifacts = () =>
     window.confirm(
@@ -124,79 +128,100 @@ export function ArtifactRedButtons({ artifactIds }: { artifactIds: string[] }) {
     artifactIds.map((id) => database.arts.set(id, { lock: false }))
 
   return (
-    <Grid container spacing={1} alignItems="center">
-      <Grid item xs={12} sm={6} md={3}>
-        <Button
-          fullWidth
-          color="error"
-          disabled={!numUnequip}
-          onClick={unequipArtifacts}
-          startIcon={<PersonOffIcon />}
-        >
-          <Trans t={t} i18nKey="button.unequipArtifacts">
-            Unequip Artifacts
-          </Trans>
-          <SqBadge sx={{ ml: 1 }} color={numUnequip ? 'success' : 'secondary'}>
-            {numUnequip}
-          </SqBadge>
-        </Button>
+    <>
+      <GoodScannerManagerModal
+        show={showGoodScannerManager}
+        onHide={() => setShowGoodScannerManager(false)}
+        artifacts={artifacts}
+      />
+      <Grid container spacing={1} alignItems="center">
+        <Grid item xs={12} sm={6} md={3}>
+          <Button
+            fullWidth
+            color="error"
+            disabled={!numUnequip}
+            onClick={unequipArtifacts}
+            startIcon={<PersonOffIcon />}
+          >
+            <Trans t={t} i18nKey="button.unequipArtifacts">
+              Unequip Artifacts
+            </Trans>
+            <SqBadge
+              sx={{ ml: 1 }}
+              color={numUnequip ? 'success' : 'secondary'}
+            >
+              {numUnequip}
+            </SqBadge>
+          </Button>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Button
+            fullWidth
+            color="error"
+            disabled={!numDelete}
+            onClick={deleteArtifacts}
+            startIcon={<DeleteForeverIcon />}
+          >
+            <Trans t={t} i18nKey="button.deleteArtifacts">
+              Delete Artifacts
+            </Trans>
+            <SqBadge sx={{ ml: 1 }} color={numDelete ? 'success' : 'secondary'}>
+              {numDelete}
+            </SqBadge>
+          </Button>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Button
+            fullWidth
+            color="error"
+            disabled={!numLock}
+            onClick={unlockArtifacts}
+            startIcon={<LockOpenIcon />}
+          >
+            <Trans t={t} i18nKey="button.unlockrtifacts">
+              Unlock Artifacts
+            </Trans>
+            <SqBadge sx={{ ml: 1 }} color={numLock ? 'success' : 'secondary'}>
+              {numLock}
+            </SqBadge>
+          </Button>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Button
+            fullWidth
+            color="error"
+            disabled={!numUnlock}
+            onClick={lockArtifacts}
+            startIcon={<LockIcon />}
+          >
+            <Trans t={t} i18nKey="button.lockArtifacts">
+              Lock Artifacts
+            </Trans>
+            <SqBadge sx={{ ml: 1 }} color={numUnlock ? 'success' : 'secondary'}>
+              {numUnlock}
+            </SqBadge>
+          </Button>
+        </Grid>
+        <Grid item xs={12} display="flex" justifyContent="space-around">
+          <Typography variant="caption" color="text.secondary">
+            <Trans t={t} i18nKey="buttonHint">
+              Note: the red buttons above only apply to
+              <b>currently filtered artifacts</b>
+            </Trans>
+          </Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Button
+            fullWidth
+            color="warning"
+            disabled={!artifactIds.length}
+            onClick={() => setShowGoodScannerManager(true)}
+            startIcon={<CloudSyncIcon />}
+          >
+            Apply current lock states to Genshin
+          </Button>
+        </Grid>
       </Grid>
-      <Grid item xs={12} sm={6} md={3}>
-        <Button
-          fullWidth
-          color="error"
-          disabled={!numDelete}
-          onClick={deleteArtifacts}
-          startIcon={<DeleteForeverIcon />}
-        >
-          <Trans t={t} i18nKey="button.deleteArtifacts">
-            Delete Artifacts
-          </Trans>
-          <SqBadge sx={{ ml: 1 }} color={numDelete ? 'success' : 'secondary'}>
-            {numDelete}
-          </SqBadge>
-        </Button>
-      </Grid>
-      <Grid item xs={12} sm={6} md={3}>
-        <Button
-          fullWidth
-          color="error"
-          disabled={!numLock}
-          onClick={unlockArtifacts}
-          startIcon={<LockOpenIcon />}
-        >
-          <Trans t={t} i18nKey="button.unlockrtifacts">
-            Unlock Artifacts
-          </Trans>
-          <SqBadge sx={{ ml: 1 }} color={numLock ? 'success' : 'secondary'}>
-            {numLock}
-          </SqBadge>
-        </Button>
-      </Grid>
-      <Grid item xs={12} sm={6} md={3}>
-        <Button
-          fullWidth
-          color="error"
-          disabled={!numUnlock}
-          onClick={lockArtifacts}
-          startIcon={<LockIcon />}
-        >
-          <Trans t={t} i18nKey="button.lockArtifacts">
-            Lock Artifacts
-          </Trans>
-          <SqBadge sx={{ ml: 1 }} color={numUnlock ? 'success' : 'secondary'}>
-            {numUnlock}
-          </SqBadge>
-        </Button>
-      </Grid>
-      <Grid item xs={12} display="flex" justifyContent="space-around">
-        <Typography variant="caption" color="text.secondary">
-          <Trans t={t} i18nKey="buttonHint">
-            Note: the red buttons above only apply to
-            <b>currently filtered artifacts</b>
-          </Trans>
-        </Typography>
-      </Grid>
-    </Grid>
+    </>
   )
 }

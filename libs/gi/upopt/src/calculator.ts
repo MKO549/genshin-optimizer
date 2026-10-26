@@ -81,6 +81,16 @@ type DefineInfo = {
 }
 export type UpOptInfo = LevelUpInfo | ReshapeInfo | DefineInfo
 
+export type ArtifactUpgradeEvaluation =
+  | { status: 'unsupported' | 'invalidData' }
+  | {
+      status: 'evaluated'
+      probability: number
+      averageIncrease: number
+      currentValue: number
+      accuracy: 'exact' | 'estimated'
+    }
+
 function canLevelUp(art: ICachedArtifact) {
   // Restricted to 5* artifacts for now.
   return art.rarity === 5
@@ -155,6 +165,38 @@ export class UpOptCalculatorV2 {
     if (!canLevelUp(art)) return
     const info: LevelUpInfo = { artifactId: art.id, type: 'levelUp' }
     this.candidates.push(this.fromLevelUpInfo(info, art))
+  }
+
+  /** Unpruned one-slot evaluation for cleanup, including unsuccessful swaps. */
+  evaluateArtifact(art: ICachedArtifact): ArtifactUpgradeEvaluation {
+    if (!canLevelUp(art)) return { status: 'unsupported' }
+    try {
+      const { result, tree } = this.evaluateNodes(
+        levelUpArtifact(art, this.build)
+      )
+      // Inventory cleanup must retain even tiny positive chances. The chart
+      // accumulator rounds their conditional increase to zero below 1e-6.
+      const averageIncrease =
+        result.p > 0
+          ? tree.reduce(
+              (sum, { p, n }) =>
+                sum + p * n.evaluation.prob * n.evaluation.upAvg,
+              0
+            ) / result.p
+          : 0
+      const currentValue = this.obj.threshold[0]
+      if (![result.p, averageIncrease, currentValue].every(Number.isFinite))
+        return { status: 'invalidData' }
+      return {
+        status: 'evaluated',
+        probability: Math.min(1, Math.max(0, result.p)),
+        averageIncrease: Math.max(0, averageIncrease),
+        currentValue,
+        accuracy: art.level === 20 ? 'exact' : 'estimated',
+      }
+    } catch {
+      return { status: 'invalidData' }
+    }
   }
 
   fromLevelUpInfo(info: LevelUpInfo, art: ICachedArtifact) {

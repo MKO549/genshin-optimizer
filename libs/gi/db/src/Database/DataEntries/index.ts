@@ -14,8 +14,10 @@ import type { WeaponSortKey } from './DisplayWeaponEntry'
 
 export {
   type ArtifactCleanupConfig,
+  allCleanupCharacterKeys,
   type CleanupBuildProfile,
   type CleanupBuiltInPatterns,
+  type CleanupCharacterKey,
   type CleanupKeepRulePreset,
   type CleanupPattern,
   type CleanupProfileState,
